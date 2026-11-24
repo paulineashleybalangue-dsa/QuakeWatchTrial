@@ -122,12 +122,21 @@ CONTRACT = pa.DataFrameSchema({
 
 
 def split_by_contract(raw):
-    """Return (good rows, rejected rows)."""
+    """Return (good rows, rejected rows), preserving invalid rows for audit."""
     try:
-        CONTRACT.validate(raw)
+        CONTRACT.validate(raw, lazy=True)
+    except pa.errors.SchemaErrors as exc:
+        log.exception("Contract validation failed; identifying rejected rows")
+        failed_indices = exc.failure_cases["index"].dropna().unique()
+        rejects = raw.loc[raw.index.isin(failed_indices)].copy()
+        good = raw.loc[~raw.index.isin(failed_indices)].copy()
+        if len(rejects):
+            log.warning("Rejected %d earthquake row(s) that failed the data contract", len(rejects))
+        return good, rejects
     except Exception:
-        pass
-    return raw, raw.iloc[0:0]
+        log.exception("Unexpected error while validating earthquake rows")
+        raise
+    return raw.copy(), raw.iloc[0:0].copy()
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
