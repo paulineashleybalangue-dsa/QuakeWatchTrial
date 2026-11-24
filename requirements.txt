@@ -1,0 +1,8 @@
+pytest
+responses
+pandas
+numpy
+pyarrow
+pandera
+requests
+matplotlib
