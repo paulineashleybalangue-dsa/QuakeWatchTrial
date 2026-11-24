@@ -68,3 +68,4 @@ def test_group_rejected_rows_emit_warning(raw_snapshot, caplog):
     assert any(record.levelno == logging.WARNING and "Rejected 1" in record.message
                for record in caplog.records)
 
+

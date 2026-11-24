@@ -103,7 +103,11 @@ def save_raw(table):
 
 def load_new(until=LAST_DAY):
     """Fetch only what is not saved yet. Returns the number of new rows."""
-    fetched = fetch_range(FIRST_DAY, until)
+    latest = watermark()
+    start = FIRST_DAY if latest is None else (
+        latest + pd.Timedelta(milliseconds=1)
+    ).strftime("%Y-%m-%dT%H:%M:%S.%f")
+    fetched = fetch_range(start, until)
     if len(fetched):
         save_raw(fetched)
     log.info("acquire: %d new rows", len(fetched))
